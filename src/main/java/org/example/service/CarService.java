@@ -20,7 +20,7 @@ import java.util.*;
 public class CarService {
     private CarRepository carRepository;
     private CategoryRepository categoryRepository;
-    private Logger logger = LoggerFactory.getLogger(CarService.class);
+    private final Logger logger = LoggerFactory.getLogger(CarService.class);
 
     @Transactional
     public Car save(Car car) {
