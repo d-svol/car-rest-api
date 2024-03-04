@@ -20,11 +20,14 @@ public class Car {
     @Column(name = "object_id")
     private String objectId;
 
+    @Column(name = "make")
+    private String make;
+
+    @Column(name = "year")
+    private Year year;
+
     @Column(name = "model")
     private String model;
-
-    @Column(name = "brand")
-    private String brand;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
@@ -32,7 +35,4 @@ public class Car {
             joinColumns = @JoinColumn(name = "car_id"),
             inverseJoinColumns = @JoinColumn(name = "category_id"))
     private List<Category> categories = new ArrayList<>();
-
-    @Column(name = "year")
-    private Year year;
 }

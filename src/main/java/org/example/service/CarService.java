@@ -1,117 +1,102 @@
 package org.example.service;
 
-import org.example.model.Car;
-import org.example.model.Category;
+import jakarta.persistence.EntityNotFoundException;
+import org.example.dto.CarDto;
+import org.example.mapper.CarMapper;
 import org.example.repository.CarRepository;
-import org.example.repository.CategoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Year;
-import java.util.*;
-
+import java.util.List;
+import java.util.Optional;
 
 @Service
+@Transactional
 public class CarService {
-    private CarRepository carRepository;
-    private CategoryRepository categoryRepository;
+    private final CarRepository carRepository;
+    private final CarMapper carMapper;
     private final Logger logger = LoggerFactory.getLogger(CarService.class);
 
-    @Transactional
-    public Car save(Car car) {
-        carRepository.save(car);
-        logger.info("Saved car with objectId: {}", car.getObjectId());
-        return car;
+    public CarService(CarRepository carRepository, CarMapper carMapper) {
+        this.carRepository = carRepository;
+        this.carMapper = carMapper;
     }
 
-    public List<Car> getAll() {
-        return carRepository.findAll();
-    }
-
-    public Optional<Car> getById(Long id) {
-        return carRepository.findById(id);
-    }
-
-    public Optional<Car> getByObjectId(String objectId) {
-        return carRepository.findByObjectId(objectId);
-    }
-
-    public List<Car> getByBrand(String brand) {
-        return carRepository.findByBrand(brand);
-    }
-
-    @Transactional
-    public Car addCar(String brand, String model, Year year, String[] categoriesNames) {
-        Car car = new Car();
-        car.setBrand(brand);
-        car.setModel(model);
-        car.setYear(year);
-
-        List<Category> categories = saveCategories(categoriesNames);
-        car.setCategories(categories);
-
-        return carRepository.save(car);
-    }
-
-    @Transactional
-    public Car update(Car car, Long carId) {
-        car.setId(carId);
-        carRepository.save(car);
-        logger.info("Updated car with id: {}", car.getId());
-        return car;
-    }
-
-    @Transactional
-    public void deleteById(Long id) {
-        carRepository.deleteById(id);
-        logger.info("Deleted by id: {}", id);
-    }
-
-    @Transactional
-    public void deleteByObjectId(String objectId) {
-        carRepository.deleteByObjectId(objectId);
-        logger.info("Deleted by objectId: {}", objectId);
-    }
-
-    public List<Car> getByBrandAndModel(String brand, String model, PageRequest pageRequest) {
-        Sort sort = pageRequest.getSort();
-        Page<Car> page = carRepository.findByBrandAndModel(brand, model, pageRequest, sort);
-        return page.getContent();
-    }
-
-    public List<Car> getByBrandAndModelAndYear(String brand, String model, Year year) {
-        List<Car> cars = getByBrand(brand);
-        cars.removeIf(obj -> obj.getModel().equals(model) && obj.getYear().equals(year));
-        return cars;
-    }
-
-    public List<Car> getByBrandAndModelAndMinYearAndMaxYear(String brand, String model, Year minYear, Year maxYear) {
-        List<Car> cars = getByBrand(brand);
-        cars.removeIf(obj -> !obj.getModel().equals(model));
-        cars.removeIf(obj -> (obj.getYear().isBefore(minYear) || obj.getYear().isAfter(maxYear)));
-        return cars;
-    }
-
-    private List<Category> saveCategories(String[] categoriesNames) {
-        List<Category> categories = new ArrayList<>();
-
-        for (String categoryName : categoriesNames) {
-            Optional<Category> existingCategory = categoryRepository.findByName(categoryName);
-
-            if (existingCategory.isPresent()) {
-                categories.add(existingCategory.get());
-            } else {
-                Category newCategory = new Category();
-                newCategory.setName(categoryName);
-                categories.add(categoryRepository.save(newCategory));
-            }
+    public CarDto create(CarDto carDto) {
+        try {
+            carRepository.save(carMapper.toEntity(carDto));
+            logger.info("Saved car with objectId: {}", carDto.getObjectId());
+            return carDto;
+        } catch (Exception ex) {
+            logger.error("Error saving car with objectId: {}", carDto.getObjectId(), ex);
+            throw new EntityNotFoundException("Error updating car", ex);
         }
+    }
 
-        return categories;
+    public Page<CarDto> getAll(Pageable pageable) {
+        return carRepository.findAll(pageable).map(carMapper::toDto);
+    }
+
+    public Optional<CarDto> getByObjectId(String objectId) {
+        return carRepository.findByObjectId(objectId).map(carMapper::toDto);
+    }
+
+    public CarDto update(CarDto carDto) {
+        try {
+            carRepository.save(carMapper.toEntity(carDto));
+            logger.info("Updated car with objectId: {}", carDto.getObjectId());
+            return carDto;
+        } catch (Exception ex) {
+            logger.error("Error updating car with objectId: {}", carDto.getObjectId(), ex);
+            throw new EntityNotFoundException("Error updating car", ex);
+        }
+    }
+
+    public void deleteByObjectId(String objectId) {
+        try {
+            carRepository.deleteByObjectId(objectId);
+            logger.info("Deleted by objectId: {}", objectId);
+        } catch (RuntimeException ex) {
+            logger.error("Error car with objectId: " + objectId + " not deleted", ex);
+            throw new EntityNotFoundException("Error car with objectId: " + objectId + " not deleted", ex);
+        }
+    }
+
+    public Page<CarDto> getByMake(String make) {
+        List<CarDto> allCarDtoByMake = carRepository.findByMake(make).stream().map(carMapper::toDto).toList();
+        return new PageImpl<>(allCarDtoByMake);
+    }
+
+    public Page<CarDto> getByMakeAndModel(String make, String model, PageRequest pageRequest) {
+        return carRepository.findByMakeAndModel(make, model, pageRequest).map(carMapper::toDto);
+    }
+
+    public Page<CarDto> getByMakeAndModelAndYear(String make, String model, Year year, Pageable pageable) {
+        try {
+            Page<CarDto> carDtoPage = carRepository.findByMakeAndModelAndYear(make, model, year, pageable).map(carMapper::toDto);
+            logger.info("Find by make: {}, model: {}, year: {}", make, model, year);
+            return carDtoPage;
+        } catch (RuntimeException ex) {
+            logger.error("Error not find car with - make: {}, model: {}, year: {}: ", make, model, year, ex);
+            throw new EntityNotFoundException("Error not find car with - make, model, year: " + make + model + year, ex);
+        }
+    }
+
+    public Page<CarDto> getByMakeAndModelAndMinYearAndMaxYear(String make, String model, Year minYear, Year maxYear, Pageable pageable) {
+        try {
+            Page<CarDto> carDtoPage = carRepository.findByMakeAndModelAndYearBetween(make, model, minYear, maxYear, pageable).map(carMapper::toDto);
+            logger.info("Find by make: {}, model: {}, min year: {}, max year: {}", make, model, minYear, maxYear);
+            return carDtoPage;
+        } catch (RuntimeException ex) {
+            logger.error("Error not find car with - make: {}, model: {}, min year: {}, max year: {}", make, model, minYear, maxYear, ex);
+            throw new EntityNotFoundException("Error not find car with - make, model, min year, max year: ", ex);
+        }
     }
 }

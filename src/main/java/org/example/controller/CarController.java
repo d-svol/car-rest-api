@@ -1,88 +1,116 @@
 package org.example.controller;
 
-import org.example.model.Car;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import lombok.RequiredArgsConstructor;
+import org.example.dto.CarDto;
 import org.example.service.CarService;
-import org.example.service.CategoryService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import static org.springframework.data.domain.Sort.Direction;
 
 import java.time.Year;
-import java.util.List;
 import java.util.Optional;
 
+import static org.springframework.data.domain.Sort.Direction;
+
 @RestController
-@RequestMapping("/cars")
+@RequestMapping("cars")
+@RequiredArgsConstructor
 public class CarController {
     private final CarService carService;
 
-    public CarController(CarService carService, CategoryService categoryService) {
-        this.carService = carService;
+    @PostMapping("/create")
+    @PreAuthorize("isAuthenticated()")
+    public CarDto create(@RequestBody CarDto carDto) {
+        return carService.create(carDto);
     }
 
     @GetMapping
     @PreAuthorize("permitAll()")
-    List<Car> getAll() {
-        return carService.getAll();
+    public Page<CarDto> getAll(
+            @RequestParam(name = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
+            @RequestParam(name = "direction", defaultValue = "DESC", required = false) String direction) {
+        Sort sort = Sort.by(direction.equalsIgnoreCase("ASC") ? Direction.ASC : Direction.DESC,
+                "make", "model", "year", "id");
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return carService.getAll(pageable);
     }
 
-
-    @GetMapping("object-id/{objectId}")
+    @GetMapping("/object-id/{objectId}")
     @PreAuthorize("permitAll()")
-    Optional<Car> getCarByObjectId(@PathVariable String objectId) {
+    public Optional<CarDto> getCarDtoByObjectId(@PathVariable("objectId") String objectId) {
         return carService.getByObjectId(objectId);
     }
 
-    @GetMapping("/brand/{brand}")
-    @PreAuthorize("permitAll()")
-    List<Car> getCarsByBrand(@PathVariable String brand) {
-        return carService.getByBrand(brand);
-    }
-
-    @GetMapping("/brand/{brand}/model/{model}")
-    @PreAuthorize("permitAll()")
-    List<Car> getCarsByBrandAndModel(@PathVariable String brand,
-                                     @PathVariable String model,
-                                     @RequestParam(defaultValue = "0") int page,
-                                     @RequestParam(defaultValue = "10") int size,
-                                     @RequestParam(defaultValue = "asc") String sortOrder) {
-        Sort sort = Sort.by(sortOrder.equals("desc") ? Direction.DESC : Direction.ASC, "year", "brand", "model");
-        PageRequest pageRequest = PageRequest.of(page, size, sort);
-        return carService.getByBrandAndModel(brand, model, pageRequest);
-    }
-
-    @GetMapping("/brand/{brand}/model/{model}/year/{year}")
-    @PreAuthorize("permitAll()")
-    List<Car> getCarsByBrandAndModelAndYear(@PathVariable String brand,
-                                            @PathVariable String model,
-                                            @PathVariable Year year) {
-        return carService.getByBrandAndModelAndYear(brand, model, year);
-    }
-
-    @GetMapping("/brand/{brand}/model/{model}/min-year/{minYear}/max-year/{maxYear}")
-    @PreAuthorize("permitAll()")
-    List<Car> getCarsByBrandAndModelAndMinYearAndMaxYear(@PathVariable String brand,
-                                                         @PathVariable String model,
-                                                         @PathVariable Year minYear,
-                                                         @PathVariable Year maxYear) {
-        return carService.getByBrandAndModelAndMinYearAndMaxYear(brand, model, minYear, maxYear);
-    }
-
-    @PostMapping
+    @PostMapping("/update")
     @PreAuthorize("isAuthenticated()")
-    Car add(@RequestParam String brand,
-            @RequestParam String model,
-            @RequestParam Year year,
-            @RequestParam(name = "categories") String[] categoriesNames) {
-        return carService.addCar(brand, model, year, categoriesNames);
+    public CarDto update(@RequestBody CarDto carDto) {
+        return carService.update(carDto);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/delete/{objectId}")
     @PreAuthorize("isAuthenticated()")
-    void delete(@RequestParam("object-id") String objectId) {
+    public void deleteByObjectId(@PathVariable("objectId") String objectId) {
         carService.deleteByObjectId(objectId);
     }
 
+    @GetMapping("/make/{make}")
+    @PreAuthorize("permitAll()")
+    public Page<CarDto> getCarsByMake(@PathVariable String make,
+                                      @RequestParam(name = "page", defaultValue = "0", required = false) int page,
+                                      @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
+                                      @Parameter(schema = @Schema(type = "string", allowableValues = {"ASC", "DESC"}))
+                                      @RequestParam(name = "direction", defaultValue = "ASC", required = false) String direction) {
+        Sort sort = Sort.by(direction.equalsIgnoreCase("ASC") ? Direction.ASC : Direction.DESC,
+                "make", "id");
+        return carService.getByMake(make);
+    }
+
+    @GetMapping("/make/{make}/model/{model}")
+    @PreAuthorize("permitAll()")
+    public Page<CarDto> getCarsByMakeAndModel(@PathVariable("make") String make,
+                                              @PathVariable("model") String model,
+                                              @RequestParam(name = "page", defaultValue = "0", required = false) int page,
+                                              @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
+                                              @Parameter(schema = @Schema(type = "string", allowableValues = {"ASC", "DESC"}))
+                                              @RequestParam(name = "direction", defaultValue = "ASC", required = false) String direction) {
+        Sort sort = Sort.by(direction.equalsIgnoreCase("ASC") ? Direction.ASC : Direction.DESC,
+                "make", "model", "id");
+        return carService.getByMakeAndModel(make, model, PageRequest.of(page, size, sort));
+    }
+
+    @GetMapping("/make/{make}/model/{model}/year/{year}")
+    @PreAuthorize("permitAll()")
+    public Page<CarDto> getCarsByMakeAndModelAndYear(@PathVariable("make") String make,
+                                                     @PathVariable("model") String model,
+                                                     @PathVariable Year year,
+                                                     @RequestParam(name = "page", defaultValue = "0", required = false) int page,
+                                                     @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
+                                                     @Parameter(schema = @Schema(type = "string", allowableValues = {"ASC", "DESC"}))
+                                                     @RequestParam(name = "direction", defaultValue = "ASC", required = false) String direction) {
+        Sort sort = Sort.by(direction.equalsIgnoreCase("ASC") ? Direction.ASC : Direction.DESC,
+                "make", "model", "year", "id");
+        return carService.getByMakeAndModelAndYear(make, model, year, PageRequest.of(page, size, sort));
+    }
+
+    @GetMapping("/make/{make}/model/{model}/min-year/{minYear}/max-year/{maxYear}")
+    @PreAuthorize("permitAll()")
+    public Page<CarDto> getCarsByMakeAndModelAndMinYearAndMaxYear(@PathVariable String make,
+                                                                  @PathVariable String model,
+                                                                  @PathVariable Year minYear,
+                                                                  @PathVariable Year maxYear,
+                                                                  @RequestParam(name = "page", defaultValue = "0", required = false) int page,
+                                                                  @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
+                                                                  @Parameter(schema = @Schema(type = "string", allowableValues = {"ASC", "DESC"}))
+                                                                  @RequestParam(name = "direction", defaultValue = "ASC", required = false) String direction) {
+        Sort sort = Sort.by(direction.equalsIgnoreCase("ASC") ? Direction.ASC : Direction.DESC,
+                "make", "model", "year", "id");
+        return carService.getByMakeAndModelAndMinYearAndMaxYear(make, model, minYear, maxYear, PageRequest.of(page, size, sort));
+    }
 }
