@@ -1,76 +1,56 @@
 @startuml
 
 class Category {
-  - id: int
-  - name: String
-
+  + id: Long
+  + name: String
 }
 
 class Car {
-  - id: int
-  - object_id: String
-  - model: String
-  - brand: String
-  - year: int
+  + id: Long
+  + objectId: String
+  + make: String
+  + year: Year
+  + model: String
+  + categories: List<Category>
 }
 
-class CarCategory {
-  - id: int
-  - car_id: int
-  - category_id: int
+class CarDto {
+  + objectId: String
+  + make: String
+  + year: int
+  + model: String
 }
 
-interface CategoryRepository {
-  + findByName(): Optional<Category>
+interface CarMapper {
+  + toDto(car: Car): CarDto
+  + toEntity(carDto: CarDto): CarDto
 }
 
 interface CarRepository {
-  + findByBrand(brand: String): List<Car>
   + findByObjectId(objectId: String): Optional<Car>
-  + deleteByObjectId(car: Car): Car
-  + deleteById(objectId: Long): void
-  + findByBrandAndModel(brand: String , model: String , pageable: Pageable , sort: Sort ): boolean
+  + save(car: Car): Car
+  + deleteByObjectId(objectId: String): void
+}
+
+class CarService {
 }
 
 class CarController {
   - carService: CarService
-
-  + getAll(): List<Car>
-  + getCarByObjectId(objectId: String): Optional<Car>
-  + getCarsByBrand(brand: String): List<Car>
-  + getCarsByBrandAndModel(brand: String, model: String, page: int, size: int, sortOrder: String): List<Car>
-  + getCarsByBrandAndModelAndYear(brand: String, model: String, year: Year): List<Car>
-  + getCarsByBrandAndModelAndMinYearAndMaxYear(brand: String, model: String, minYear: Year, maxYear: Year): List<Car>
-  + add(brand: String, model: String, year: Year, categoriesNames: String[]): Car
-  + delete(objectId: String): void
-}
-
-class CategoryService {
-  - categoryRepository: CategoryRepository
-
-  + findByName(name: String): Optional<Category>
-}
-
-class CarService {
-  - carRepository: CarRepository
-  - categoryService: CategoryService
-
-  + getAll(): List<Car>
-  + getByObjectId(objectId: String): Optional<Car>
-  + getByBrand(brand: String): List<Car>
-  + getByBrandAndModel(brand: String, model: String, page: int, size: int, sortOrder: String): List<Car>
-  + getByBrandAndModelAndYear(brand: String, model: String, year: Year): List<Car>
-  + getByBrandAndModelAndMinYearAndMaxYear(brand: String, model: String, minYear: Year, maxYear: Year): List<Car>
-  + addCar(brand: String, model: String, year: Year, categoriesNames: String[]): Car
+   + create(carDto: CarDTO): ResponseEntity<Long>
+    + getAll(): Page<CarDto>
+  + getByObjectId(objectId: String): Optional<CarDto>
   + deleteByObjectId(objectId: String): void
+  + getByMakeAndModel(): Page<CarDto>
+  + getByMakeAndModelAndYear(): Page<CarDto>
+  + getByMakeAndModelAndMinYearAndMaxYear(): Page<CarDto>
+
 }
 
 CarController -- CarService
 CarService -- CarRepository
-CarService -- CategoryService
-CategoryService -- CategoryRepository
-
-Category -- CarCategory
-Car -- CarCategory
+CarService -- CarDto
+CarDto -- Car
+Car -- Category
 
 @enduml

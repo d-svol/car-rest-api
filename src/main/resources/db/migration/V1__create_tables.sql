@@ -3,7 +3,7 @@ DROP TABLE if EXISTS category;
 
 CREATE TABLE car (
    id SERIAL PRIMARY KEY,
-   object_id VARCHAR(255),
+   object_id VARCHAR(255) UNIQUE,
    make VARCHAR(255),
    year INTEGER,
    model VARCHAR(255)

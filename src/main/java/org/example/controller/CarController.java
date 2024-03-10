@@ -3,6 +3,7 @@ package org.example.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.CarDto;
 import org.example.service.CarService;
@@ -10,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,17 +20,22 @@ import java.time.Year;
 import java.util.Optional;
 
 import static org.springframework.data.domain.Sort.Direction;
+import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @RestController
-@RequestMapping("cars")
+@RequestMapping("/cars")
 @RequiredArgsConstructor
 public class CarController {
     private final CarService carService;
 
-    @PostMapping("/create")
+    @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public CarDto create(@RequestBody CarDto carDto) {
-        return carService.create(carDto);
+    public ResponseEntity<Long> create(@RequestBody CarDto carDto) {
+        try {
+            return new ResponseEntity<>(carService.create(carDto), HttpStatus.CREATED);
+        } catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping
@@ -42,27 +50,31 @@ public class CarController {
         return carService.getAll(pageable);
     }
 
-    @GetMapping("/object-id/{objectId}")
+    @GetMapping("/{objectId}")
     @PreAuthorize("permitAll()")
-    public Optional<CarDto> getCarDtoByObjectId(@PathVariable("objectId") String objectId) {
+    public Optional<CarDto> getByObjectId(@PathVariable("objectId") String objectId) {
         return carService.getByObjectId(objectId);
     }
 
-    @PostMapping("/update")
     @PreAuthorize("isAuthenticated()")
-    public CarDto update(@RequestBody CarDto carDto) {
-        return carService.update(carDto);
+    @PutMapping("/{objectId}")
+    public ResponseEntity<CarDto> update(@PathVariable String  objectId, @RequestBody CarDto carDto) {
+        try {
+            return new ResponseEntity<>(carService.update(objectId, carDto), HttpStatus.CREATED);
+        } catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @DeleteMapping("/delete/{objectId}")
+    @DeleteMapping("/{objectId}")
     @PreAuthorize("isAuthenticated()")
     public void deleteByObjectId(@PathVariable("objectId") String objectId) {
         carService.deleteByObjectId(objectId);
     }
 
-    @GetMapping("/make/{make}")
+    @GetMapping("/makes/{make}")
     @PreAuthorize("permitAll()")
-    public Page<CarDto> getCarsByMake(@PathVariable String make,
+    public Page<CarDto> getByMake(@PathVariable String make,
                                       @RequestParam(name = "page", defaultValue = "0", required = false) int page,
                                       @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
                                       @Parameter(schema = @Schema(type = "string", allowableValues = {"ASC", "DESC"}))
@@ -72,9 +84,9 @@ public class CarController {
         return carService.getByMake(make);
     }
 
-    @GetMapping("/make/{make}/model/{model}")
+    @GetMapping("/makes/{make}/models/{model}")
     @PreAuthorize("permitAll()")
-    public Page<CarDto> getCarsByMakeAndModel(@PathVariable("make") String make,
+    public Page<CarDto> getByMakeAndModel(@PathVariable("make") String make,
                                               @PathVariable("model") String model,
                                               @RequestParam(name = "page", defaultValue = "0", required = false) int page,
                                               @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
@@ -85,9 +97,9 @@ public class CarController {
         return carService.getByMakeAndModel(make, model, PageRequest.of(page, size, sort));
     }
 
-    @GetMapping("/make/{make}/model/{model}/year/{year}")
+    @GetMapping("/makes/{make}/models/{model}/years/{year}")
     @PreAuthorize("permitAll()")
-    public Page<CarDto> getCarsByMakeAndModelAndYear(@PathVariable("make") String make,
+    public Page<CarDto> getByMakeAndModelAndYear(@PathVariable("make") String make,
                                                      @PathVariable("model") String model,
                                                      @PathVariable Year year,
                                                      @RequestParam(name = "page", defaultValue = "0", required = false) int page,
@@ -99,9 +111,9 @@ public class CarController {
         return carService.getByMakeAndModelAndYear(make, model, year, PageRequest.of(page, size, sort));
     }
 
-    @GetMapping("/make/{make}/model/{model}/min-year/{minYear}/max-year/{maxYear}")
+    @GetMapping("/makes/{make}/models/{model}/min-years/{minYear}/max-years/{maxYear}")
     @PreAuthorize("permitAll()")
-    public Page<CarDto> getCarsByMakeAndModelAndMinYearAndMaxYear(@PathVariable String make,
+    public Page<CarDto> getByMakeAndModelAndMinYearAndMaxYear(@PathVariable String make,
                                                                   @PathVariable String model,
                                                                   @PathVariable Year minYear,
                                                                   @PathVariable Year maxYear,

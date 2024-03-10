@@ -3,6 +3,7 @@ package org.example.service;
 import jakarta.persistence.EntityNotFoundException;
 import org.example.dto.CarDto;
 import org.example.mapper.CarMapper;
+import org.example.model.Car;
 import org.example.repository.CarRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +30,12 @@ public class CarService {
         this.carMapper = carMapper;
     }
 
-    public CarDto create(CarDto carDto) {
+    public Long create(CarDto carDto) {
         try {
-            carRepository.save(carMapper.toEntity(carDto));
+            Car car = carMapper.toEntity(carDto);
+            carRepository.save(car);
             logger.info("Saved car with objectId: {}", carDto.getObjectId());
-            return carDto;
+            return car.getId();
         } catch (Exception ex) {
             logger.error("Error saving car with objectId: {}", carDto.getObjectId(), ex);
             throw new EntityNotFoundException("Error updating car", ex);
@@ -48,9 +50,12 @@ public class CarService {
         return carRepository.findByObjectId(objectId).map(carMapper::toDto);
     }
 
-    public CarDto update(CarDto carDto) {
+    public CarDto update(String objectId, CarDto carDto) {
         try {
-            carRepository.save(carMapper.toEntity(carDto));
+            Car car = carRepository.findByObjectId(objectId)
+                    .orElseThrow(() -> new EntityNotFoundException("Car not found with id: " + objectId));
+            updateCarFields(car, carDto);
+            carRepository.save(car);
             logger.info("Updated car with objectId: {}", carDto.getObjectId());
             return carDto;
         } catch (Exception ex) {
@@ -71,8 +76,14 @@ public class CarService {
 
     public Page<CarDto> getByMake(String make) {
         List<CarDto> allCarDtoByMake = carRepository.findByMake(make).stream().map(carMapper::toDto).toList();
+
+        if (allCarDtoByMake.isEmpty()) {
+            throw new EntityNotFoundException("Error don't found with make: " + make);
+        }
+
         return new PageImpl<>(allCarDtoByMake);
     }
+
 
     public Page<CarDto> getByMakeAndModel(String make, String model, PageRequest pageRequest) {
         return carRepository.findByMakeAndModel(make, model, pageRequest).map(carMapper::toDto);
@@ -98,5 +109,12 @@ public class CarService {
             logger.error("Error not find car with - make: {}, model: {}, min year: {}, max year: {}", make, model, minYear, maxYear, ex);
             throw new EntityNotFoundException("Error not find car with - make, model, min year, max year: ", ex);
         }
+    }
+
+    private void updateCarFields(Car car, CarDto carDto) {
+        car.setObjectId(carDto.getObjectId());
+        car.setMake(carDto.getMake());
+        car.setModel(carDto.getModel());
+        car.setYear(Year.of(carDto.getYear()));
     }
 }

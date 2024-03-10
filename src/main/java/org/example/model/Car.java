@@ -1,6 +1,7 @@
 package org.example.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,18 +19,20 @@ public class Car {
     private Long id;
 
     @Column(name = "object_id")
+    @NotBlank
     private String objectId;
 
-    @Column(name = "make")
+    @Column(name = "make", nullable = false)
     private String make;
 
-    @Column(name = "year")
+    @Column(name = "year", nullable = false)
     private Year year;
 
-    @Column(name = "model")
+    @Column(name = "model", nullable = false)
     private String model;
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
+    @ManyToMany(fetch = FetchType.EAGER, cascade =
+            {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(
             name = "car_category",
             joinColumns = @JoinColumn(name = "car_id"),

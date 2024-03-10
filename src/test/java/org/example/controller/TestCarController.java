@@ -73,18 +73,14 @@ class TestCarController {
     @WithMockUser
     void testCreate() throws Exception {
         CarDto carDto = getSampleCarDtoWithSingleElement();
+        Long firstId = 1L;
 
-        when(carService.create(carDto)).thenReturn(carDto);
+        when(carService.create(carDto)).thenReturn(firstId);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/cars/create")
+        mockMvc.perform(MockMvcRequestBuilders.post("/cars")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(carDto)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(jsonPath("$.objectId").value("objectId1"))
-                .andExpect(jsonPath("$.make").value("make1"))
-                .andExpect(jsonPath("$.year").value(2022))
-                .andExpect(jsonPath("$.model").value("model1"))
-                .andExpect(jsonPath("$.categories[0]").value("category1"))
+                .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andDo(MockMvcResultHandlers.print());
         verify(carService).create(carDto);
     }
@@ -139,20 +135,19 @@ class TestCarController {
     public void testUpdate() throws Exception {
         CarDto updatedCarDto = new CarDto("updatedObjectId", "updatedMake", 2022, "updatedModel", Collections.singletonList("updatedCategory"));
 
-        when(carService.update(updatedCarDto)).thenReturn(updatedCarDto);
+        when(carService.update(any(String.class), eq(updatedCarDto))).thenReturn(updatedCarDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/cars/update")
+        mockMvc.perform(MockMvcRequestBuilders.put("/cars/123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(updatedCarDto)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(jsonPath("$.objectId").value("updatedObjectId"))
                 .andExpect(jsonPath("$.make").value("updatedMake"))
                 .andExpect(jsonPath("$.year").value(2022))
                 .andExpect(jsonPath("$.model").value("updatedModel"))
                 .andExpect(jsonPath("$.categories[0]").value("updatedCategory"))
                 .andDo(MockMvcResultHandlers.print());
-
-        verify(carService).update(any(CarDto.class));
+        verify(carService).update(eq("123"), eq(updatedCarDto));
     }
 
     @Test
@@ -160,7 +155,7 @@ class TestCarController {
     public void testDeleteByObjectId() throws Exception {
         doNothing().when(carService).deleteByObjectId("objectId1");
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/cars/delete/{objectId}", "objectId1")
+        mockMvc.perform(MockMvcRequestBuilders.delete("/cars/{objectId}", "objectId1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk());
 
@@ -174,7 +169,7 @@ class TestCarController {
 
         when(carService.getByMake(nameMake)).thenReturn(carDtoPage);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/make/{make}", nameMake))
+        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}", nameMake))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].objectId").value("objectId1"))
@@ -195,7 +190,7 @@ class TestCarController {
         when(carService.getByMakeAndModel(eq("make1"), eq("model1"), any(PageRequest.class))).thenReturn(carDtoPage);
 
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/make/{make}/model/{model}", makeName, modelName))
+        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}/model/{model}", makeName, modelName))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].make").value(makeName))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].model").value(modelName));
@@ -213,7 +208,7 @@ class TestCarController {
                 eq(Year.of(2022)),
                 any(PageRequest.class))).thenReturn(carDtoPage);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/make/{make}/model/{model}/year/{year}", "make1", "model1", 2022))
+        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}/models/{model}/years/{year}", "make1", "model1", 2022))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].make").value("make1"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].model").value("model1"))
@@ -236,7 +231,7 @@ class TestCarController {
                 any(PageRequest.class))).thenReturn(carDtoPage);
 
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/make/{make}/model/{model}/min-year/{minYear}/max-year/{maxYear}", makeName, modelName, 2020, 2023))
+        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}/models/{model}/min-years/{minYear}/max-years/{maxYear}", makeName, modelName, 2020, 2023))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content").isArray())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].make").value("make1"))
