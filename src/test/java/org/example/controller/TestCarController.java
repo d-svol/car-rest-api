@@ -140,7 +140,7 @@ class TestCarController {
         mockMvc.perform(MockMvcRequestBuilders.put("/cars/123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(updatedCarDto)))
-                .andExpect(MockMvcResultMatchers.status().isCreated())
+                .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.objectId").value("updatedObjectId"))
                 .andExpect(jsonPath("$.make").value("updatedMake"))
                 .andExpect(jsonPath("$.year").value(2022))

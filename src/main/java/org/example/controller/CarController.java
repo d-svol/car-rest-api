@@ -3,7 +3,6 @@ package org.example.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.CarDto;
 import org.example.service.CarService;
@@ -20,7 +19,6 @@ import java.time.Year;
 import java.util.Optional;
 
 import static org.springframework.data.domain.Sort.Direction;
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
 
 @RestController
 @RequestMapping("/cars")
@@ -60,7 +58,7 @@ public class CarController {
     @PutMapping("/{objectId}")
     public ResponseEntity<CarDto> update(@PathVariable String  objectId, @RequestBody CarDto carDto) {
         try {
-            return new ResponseEntity<>(carService.update(objectId, carDto), HttpStatus.CREATED);
+            return new ResponseEntity<>(carService.update(objectId, carDto), HttpStatus.OK);
         } catch (Exception e){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
