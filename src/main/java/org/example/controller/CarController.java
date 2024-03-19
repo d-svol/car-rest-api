@@ -2,6 +2,7 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.annotation.security.PermitAll;
 import jakarta.validation.constraints.Max;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.CarDto;
@@ -12,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Year;
@@ -27,7 +27,6 @@ public class CarController {
     private final CarService carService;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Long> create(@RequestBody CarDto carDto) {
         try {
             return new ResponseEntity<>(carService.create(carDto), HttpStatus.CREATED);
@@ -37,7 +36,7 @@ public class CarController {
     }
 
     @GetMapping
-    @PreAuthorize("permitAll()")
+    @PermitAll
     public Page<CarDto> getAll(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
@@ -49,12 +48,15 @@ public class CarController {
     }
 
     @GetMapping("/{objectId}")
-    @PreAuthorize("permitAll()")
-    public Optional<CarDto> getByObjectId(@PathVariable("objectId") String objectId) {
-        return carService.getByObjectId(objectId);
+    public ResponseEntity<Optional<CarDto>> getByObjectId(@PathVariable("objectId") String objectId) {
+        try {
+            return new ResponseEntity<>(carService.getByObjectId(objectId), HttpStatus.OK);
+        } catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
-    @PreAuthorize("isAuthenticated()")
+
     @PutMapping("/{objectId}")
     public ResponseEntity<CarDto> update(@PathVariable String  objectId, @RequestBody CarDto carDto) {
         try {
@@ -65,13 +67,15 @@ public class CarController {
     }
 
     @DeleteMapping("/{objectId}")
-    @PreAuthorize("isAuthenticated()")
-    public void deleteByObjectId(@PathVariable("objectId") String objectId) {
-        carService.deleteByObjectId(objectId);
+    public ResponseEntity<String> deleteByObjectId(@PathVariable("objectId") String objectId) {
+        try {
+            return new ResponseEntity<>(carService.deleteByObjectId(objectId), HttpStatus.OK);
+        } catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/makes/{make}")
-    @PreAuthorize("permitAll()")
     public Page<CarDto> getByMake(@PathVariable String make,
                                       @RequestParam(name = "page", defaultValue = "0", required = false) int page,
                                       @RequestParam(name = "size", defaultValue = "10", required = false) @Max(100) int size,
@@ -83,7 +87,6 @@ public class CarController {
     }
 
     @GetMapping("/makes/{make}/models/{model}")
-    @PreAuthorize("permitAll()")
     public Page<CarDto> getByMakeAndModel(@PathVariable("make") String make,
                                               @PathVariable("model") String model,
                                               @RequestParam(name = "page", defaultValue = "0", required = false) int page,
@@ -96,7 +99,6 @@ public class CarController {
     }
 
     @GetMapping("/makes/{make}/models/{model}/years/{year}")
-    @PreAuthorize("permitAll()")
     public Page<CarDto> getByMakeAndModelAndYear(@PathVariable("make") String make,
                                                      @PathVariable("model") String model,
                                                      @PathVariable Year year,
@@ -110,7 +112,6 @@ public class CarController {
     }
 
     @GetMapping("/makes/{make}/models/{model}/min-years/{minYear}/max-years/{maxYear}")
-    @PreAuthorize("permitAll()")
     public Page<CarDto> getByMakeAndModelAndMinYearAndMaxYear(@PathVariable String make,
                                                                   @PathVariable String model,
                                                                   @PathVariable Year minYear,

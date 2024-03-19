@@ -1,16 +1,11 @@
 package org.example.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.Main;
 import org.example.dto.CarDto;
 import org.example.service.CarService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -33,16 +28,13 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(classes = Main.class)
+@SpringBootTest
 @AutoConfigureMockMvc
-@EnableAutoConfiguration(
-        exclude = {
-                DataSourceAutoConfiguration.class,
-                DataSourceTransactionManagerAutoConfiguration.class,
-                HibernateJpaAutoConfiguration.class
-        })
 class TestCarController {
     @Autowired
     MockMvc mockMvc;
@@ -70,17 +62,22 @@ class TestCarController {
     }
 
     @Test
-    @WithMockUser
     void testCreate() throws Exception {
         CarDto carDto = getSampleCarDtoWithSingleElement();
         Long firstId = 1L;
 
         when(carService.create(carDto)).thenReturn(firstId);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/cars")
+        mockMvc.perform(post("/cars")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(carDto)))
-                .andExpect(MockMvcResultMatchers.status().isCreated())
+                        .content(new ObjectMapper().writeValueAsString(carDto))
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.objectId").value("objectId1"))
+                .andExpect(jsonPath("$.make").value("make1"))
+                .andExpect(jsonPath("$.year").value(2022))
+                .andExpect(jsonPath("$.model").value("model1"))
+                .andExpect(jsonPath("$.categories[0]").value("category1"))
                 .andDo(MockMvcResultHandlers.print());
         verify(carService).create(carDto);
     }
@@ -91,7 +88,7 @@ class TestCarController {
         Page<CarDto> carDtoPage = TestCarController.getCarDtoPages();
         when(carService.getAll(any(Pageable.class))).thenReturn(carDtoPage);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars"))
+        mockMvc.perform(get("/cars"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content", Matchers.hasSize(2)))
@@ -119,7 +116,7 @@ class TestCarController {
 
         when(carService.getByObjectId(objectId)).thenReturn(carDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/object-id/objectId1"))
+        mockMvc.perform(get("/cars/object-id/objectId1"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.objectId").value("objectId1"))
                 .andExpect(jsonPath("$.make").value("make1"))
@@ -137,7 +134,7 @@ class TestCarController {
 
         when(carService.update(any(String.class), eq(updatedCarDto))).thenReturn(updatedCarDto);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/cars/123")
+        mockMvc.perform(put("/cars/123")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(updatedCarDto)))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -153,9 +150,9 @@ class TestCarController {
     @Test
     @WithMockUser
     public void testDeleteByObjectId() throws Exception {
-        doNothing().when(carService).deleteByObjectId("objectId1");
+        when(carService.deleteByObjectId("objectId1")).thenReturn("objectId1");
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/cars/{objectId}", "objectId1")
+        mockMvc.perform(delete("/cars/{objectId}", "objectId1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk());
 
@@ -169,7 +166,7 @@ class TestCarController {
 
         when(carService.getByMake(nameMake)).thenReturn(carDtoPage);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}", nameMake))
+        mockMvc.perform(get("/cars/makes/{make}", nameMake))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].objectId").value("objectId1"))
@@ -190,7 +187,7 @@ class TestCarController {
         when(carService.getByMakeAndModel(eq("make1"), eq("model1"), any(PageRequest.class))).thenReturn(carDtoPage);
 
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}/model/{model}", makeName, modelName))
+        mockMvc.perform(get("/cars/makes/{make}/model/{model}", makeName, modelName))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].make").value(makeName))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].model").value(modelName));
@@ -208,7 +205,7 @@ class TestCarController {
                 eq(Year.of(2022)),
                 any(PageRequest.class))).thenReturn(carDtoPage);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}/models/{model}/years/{year}", "make1", "model1", 2022))
+        mockMvc.perform(get("/cars/makes/{make}/models/{model}/years/{year}", "make1", "model1", 2022))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].make").value("make1"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].model").value("model1"))
@@ -231,7 +228,7 @@ class TestCarController {
                 any(PageRequest.class))).thenReturn(carDtoPage);
 
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/cars/makes/{make}/models/{model}/min-years/{minYear}/max-years/{maxYear}", makeName, modelName, 2020, 2023))
+        mockMvc.perform(get("/cars/makes/{make}/models/{model}/min-years/{minYear}/max-years/{maxYear}", makeName, modelName, 2020, 2023))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content").isArray())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].make").value("make1"))

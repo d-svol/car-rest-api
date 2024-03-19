@@ -21,3 +21,4 @@ CREATE TABLE car_category (
    FOREIGN KEY (category_id) REFERENCES category ON DELETE CASCADE,
    FOREIGN KEY (car_id) REFERENCES car ON DELETE CASCADE
 );
+

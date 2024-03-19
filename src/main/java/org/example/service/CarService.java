@@ -47,7 +47,8 @@ public class CarService {
     }
 
     public Optional<CarDto> getByObjectId(String objectId) {
-        return carRepository.findByObjectId(objectId).map(carMapper::toDto);
+        Car car = carRepository.findByObjectId(objectId).orElseThrow(() -> new EntityNotFoundException("Car not found with objectId: " + objectId));
+        return Optional.ofNullable(carMapper.toDto(car));
     }
 
     public CarDto update(String objectId, CarDto carDto) {
@@ -64,11 +65,14 @@ public class CarService {
         }
     }
 
-    public void deleteByObjectId(String objectId) {
+    public String deleteByObjectId(String objectId) {
         try {
+            carRepository.findByObjectId(objectId).orElseThrow(() ->
+                    new EntityNotFoundException("Car with objectId: " + objectId + " not found"));
             carRepository.deleteByObjectId(objectId);
             logger.info("Deleted by objectId: {}", objectId);
-        } catch (RuntimeException ex) {
+            return objectId;
+        } catch (Exception ex) {
             logger.error("Error car with objectId: " + objectId + " not deleted", ex);
             throw new EntityNotFoundException("Error car with objectId: " + objectId + " not deleted", ex);
         }
