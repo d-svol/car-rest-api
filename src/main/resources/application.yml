@@ -31,15 +31,18 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-
-
 security:
   oauth2:
+    resourceserver:
+      jwt:
+        audiences: https://api
+        issuer-uri: https://dev-ko34gcgbvolph12u.us.auth0.com/
     client:
       registration:
-        okta:
+        auth0:
           client-id: jj2FBUDjUdNmbDgx4uvj9TQWzTv11uUz
           client-secret: ukRnOPUuiEYhcMig1mZQ5Hhp5jgxiloW4Kkn32wCMR_zyJYAzmBjmNsy7mjtSXml
+          authorization-grant-type: client_credentials
       provider:
-        okta:
-          authorization-uri: https://dev-ko34gcgbvolph12u.us.auth0.com
+        auth0:
+          issuer-uri: https://dev-ko34gcgbvolph12u.us.auth0.com/

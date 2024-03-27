@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
@@ -27,10 +26,11 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -116,8 +116,9 @@ class TestCarController {
 
         when(carService.getByObjectId(objectId)).thenReturn(carDto);
 
-        mockMvc.perform(get("/cars/object-id/objectId1"))
-                .andExpect(MockMvcResultMatchers.status().isOk())
+        mockMvc.perform(get("/cars/" + objectId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.objectId").value("objectId1"))
                 .andExpect(jsonPath("$.make").value("make1"))
                 .andExpect(jsonPath("$.year").value(2022))
@@ -187,7 +188,8 @@ class TestCarController {
         when(carService.getByMakeAndModel(eq("make1"), eq("model1"), any(PageRequest.class))).thenReturn(carDtoPage);
 
 
-        mockMvc.perform(get("/cars/makes/{make}/model/{model}", makeName, modelName))
+        mockMvc.perform(get("/cars/makes/{make}/models/{model}", makeName, modelName)
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].make").value(makeName))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.content[0].model").value(modelName));

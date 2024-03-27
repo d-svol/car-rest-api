@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Year;
@@ -58,6 +59,7 @@ public class CarController {
 
 
     @PutMapping("/{objectId}")
+    @PreAuthorize("hasAuthority('SCOPE_write')")
     public ResponseEntity<CarDto> update(@PathVariable String  objectId, @RequestBody CarDto carDto) {
         try {
             return new ResponseEntity<>(carService.update(objectId, carDto), HttpStatus.OK);
