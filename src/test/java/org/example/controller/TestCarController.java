@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -30,11 +31,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestPropertySource(locations = "classpath:application-test.properties")
 class TestCarController {
     @Autowired
     MockMvc mockMvc;
@@ -62,6 +63,7 @@ class TestCarController {
     }
 
     @Test
+    @WithMockUser(authorities = {"SCOPE_write"})
     void testCreate() throws Exception {
         CarDto carDto = getSampleCarDtoWithSingleElement();
         Long firstId = 1L;
@@ -73,15 +75,10 @@ class TestCarController {
                         .content(new ObjectMapper().writeValueAsString(carDto))
                         .with(csrf()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.objectId").value("objectId1"))
-                .andExpect(jsonPath("$.make").value("make1"))
-                .andExpect(jsonPath("$.year").value(2022))
-                .andExpect(jsonPath("$.model").value("model1"))
-                .andExpect(jsonPath("$.categories[0]").value("category1"))
+                .andExpect(content().string("1"))
                 .andDo(MockMvcResultHandlers.print());
         verify(carService).create(carDto);
     }
-
 
     @Test
     void testGetAll() throws Exception {
@@ -129,7 +126,7 @@ class TestCarController {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = {"SCOPE_write"})
     public void testUpdate() throws Exception {
         CarDto updatedCarDto = new CarDto("updatedObjectId", "updatedMake", 2022, "updatedModel", Collections.singletonList("updatedCategory"));
 
@@ -149,7 +146,7 @@ class TestCarController {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(authorities = {"SCOPE_write"})
     public void testDeleteByObjectId() throws Exception {
         when(carService.deleteByObjectId("objectId1")).thenReturn("objectId1");
 
@@ -165,7 +162,7 @@ class TestCarController {
         Page<CarDto> carDtoPage = getCarDtoPage();
         String nameMake = "make1";
 
-        when(carService.getByMake(nameMake)).thenReturn(carDtoPage);
+        when(carService.getByMake(eq(nameMake), any(Pageable.class))).thenReturn(carDtoPage);
 
         mockMvc.perform(get("/cars/makes/{make}", nameMake))
                 .andExpect(MockMvcResultMatchers.status().isOk())

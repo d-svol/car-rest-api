@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Repository
 public interface CarRepository extends JpaRepository<Car, Long> {
-    List<Car> findByMake(String make);
+    List<Car> findByMake(String make, Pageable pageable);
 
     Optional<Car> findByObjectId(String objectId);
 

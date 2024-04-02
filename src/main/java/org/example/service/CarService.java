@@ -78,9 +78,8 @@ public class CarService {
         }
     }
 
-    public Page<CarDto> getByMake(String make) {
-        List<CarDto> allCarDtoByMake = carRepository.findByMake(make).stream().map(carMapper::toDto).toList();
-
+    public Page<CarDto> getByMake(String make, Pageable pageable) {
+        List<CarDto> allCarDtoByMake = carRepository.findByMake(make, pageable).stream().map(carMapper::toDto).toList();
         if (allCarDtoByMake.isEmpty()) {
             throw new EntityNotFoundException("Error don't found with make: " + make);
         }
@@ -89,8 +88,8 @@ public class CarService {
     }
 
 
-    public Page<CarDto> getByMakeAndModel(String make, String model, PageRequest pageRequest) {
-        return carRepository.findByMakeAndModel(make, model, pageRequest).map(carMapper::toDto);
+    public Page<CarDto> getByMakeAndModel(String make, String model, Pageable pageable) {
+        return carRepository.findByMakeAndModel(make, model, pageable).map(carMapper::toDto);
     }
 
     public Page<CarDto> getByMakeAndModelAndYear(String make, String model, Year year, Pageable pageable) {
