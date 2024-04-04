@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.CarDto;
 import org.example.service.CarService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -50,7 +51,6 @@ public class CarController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
-
 
     @PutMapping("/{objectId}")
     @PreAuthorize("hasAuthority('SCOPE_write')")
