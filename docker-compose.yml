@@ -18,7 +18,31 @@ services:
 
   postgres:
     image: postgres:latest
+    ports:
+      - "15432:5432"
     environment:
       POSTGRES_DB: car_rest
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
+
+
+#services:
+#  postgres:
+#    image: postgres:latest
+#    ports:
+#      - "15432:5432"
+#    environment:
+#      POSTGRES_DB: car_rest
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: 1234
+
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8080:8080"
+#    volumes:
+#      - ./application.properties:/application.properties
+#    depends_on:
+#      - postgres
