@@ -1,10 +1,24 @@
-version: "2.2"
+version: '2'
+
 services:
-  postgres:
-    image: "postgres:16"
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "15432:5432"
+      - "8080"
+    volumes:
+       - ./application.properties:/application.properties
+    depends_on:
+      - postgres
     environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/car_rest
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: 1234
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: car_rest
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: car_rest

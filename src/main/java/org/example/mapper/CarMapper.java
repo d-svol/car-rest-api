@@ -21,6 +21,7 @@ public interface CarMapper {
 
     @Mapping(source = "year", target = "year", qualifiedByName = "mapIntToYear")
     @Mapping(source = "categories", target = "categories", qualifiedByName = "mapCategoryNamesToCategories")
+    @Mapping(target = "id", ignore = true)
     Car toEntity(CarDto carDto);
 
     List<Car> toEntity(List<CarDto> carDTOs);
