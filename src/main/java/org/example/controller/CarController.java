@@ -6,9 +6,9 @@ import lombok.RequiredArgsConstructor;
 import org.example.dto.CarDto;
 import org.example.service.CarService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +37,11 @@ public class CarController {
 
     @GetMapping
     @Operation(summary = "search", description = "Endpoint to get all cars")
-    public Page<CarDto> getAll(@PageableDefault(sort = {"make", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
+    public Page<CarDto> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "make, id") String[] sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort).ascending());
         return carService.getAll(pageable);
     }
 
@@ -75,7 +79,10 @@ public class CarController {
     @GetMapping("/makes/{make}")
     @Operation(summary = "search", description = "Endpoint to get cars by make")
     public Page<CarDto> getByMake(@PathVariable String make,
-                                  @PageableDefault(sort = {"make", "id"}, direction = Sort.Direction.ASC) Pageable pageable) {
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "10") int size,
+                                  @RequestParam(defaultValue = "make, id") String[] sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort).ascending());
         return carService.getByMake(make, pageable);
     }
 
@@ -84,7 +91,10 @@ public class CarController {
     public Page<CarDto> getByMakeAndModel(
             @PathVariable("make") String make,
             @PathVariable("model") String model,
-            @PageableDefault(sort = {"make", "model", "id"}, direction = Sort.Direction.ASC) Pageable pageable) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "make, model, id") String[] sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort).ascending());
         return carService.getByMakeAndModel(make, model, pageable);
     }
 
@@ -94,7 +104,10 @@ public class CarController {
     public Page<CarDto> getByMakeAndModelAndYear(@PathVariable("make") String make,
                                                  @PathVariable("model") String model,
                                                  @PathVariable Year year,
-                                                 @PageableDefault(sort = {"make", "model", "year", "id"}, direction = Sort.Direction.ASC) Pageable pageable) {
+                                                 @RequestParam(defaultValue = "0") int page,
+                                                 @RequestParam(defaultValue = "10") int size,
+                                                 @RequestParam(defaultValue = "make, model, id") String[] sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort).ascending());
         return carService.getByMakeAndModelAndYear(make, model, year, pageable);
     }
 
@@ -104,8 +117,10 @@ public class CarController {
                                                               @PathVariable("model") String model,
                                                               @PathVariable Year minYear,
                                                               @PathVariable Year maxYear,
-                                                              @PageableDefault(sort = {"make", "model", "year", "id"},
-                                                                      direction = Sort.Direction.ASC) Pageable pageable) {
+                                                              @RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "10") int size,
+                                                              @RequestParam(defaultValue = "make,model,year,id") String[] sort) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort).ascending());
         return carService.getByMakeAndModelAndMinYearAndMaxYear(make, model, minYear, maxYear, pageable);
     }
 }
