@@ -6,6 +6,8 @@ HELP.md
 target/
 !**/src/main/**/target/
 !**/src/test/**/target/
+secret.properties
+/secret.properties
 
 ### STS ###
 .apt_generated
@@ -21,7 +23,7 @@ target/
 *.iws
 *.iml
 *.ipr
-env.properties
+
 
 ### NetBeans ###
 /nbproject/private/
