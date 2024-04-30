@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: car-rest-services
     ports:
       - "8080:8080"
     depends_on:
@@ -24,25 +25,3 @@ services:
       POSTGRES_PASSWORD: 1234
     volumes:
       - ./application.properties:/application.properties
-
-
-#services:
-#  postgres:
-#    image: postgres:latest
-#    ports:
-#      - "15432:5432"
-#    environment:
-#      POSTGRES_DB: car_rest
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: 1234
-
-#  app:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    ports:
-#      - "8080:8080"
-#    volumes:
-#      - ./application.properties:/application.properties
-#    depends_on:
-#      - postgres
