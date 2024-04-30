@@ -1,0 +1,27 @@
+version: '2'
+
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: car-rest-services
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/car_rest
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    ports:
+      - "15432:5432"
+    environment:
+      POSTGRES_DB: car_rest
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - ./application.properties:/application.properties

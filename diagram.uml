@@ -1,0 +1,56 @@
+@startuml
+
+class Category {
+  + id: Long
+  + name: String
+}
+
+class Car {
+  + id: Long
+  + objectId: String
+  + make: String
+  + year: Year
+  + model: String
+  + categories: List<Category>
+}
+
+class CarDto {
+  + objectId: String
+  + make: String
+  + year: int
+  + model: String
+}
+
+interface CarMapper {
+  + toDto(car: Car): CarDto
+  + toEntity(carDto: CarDto): CarDto
+}
+
+interface CarRepository {
+  + findByObjectId(objectId: String): Optional<Car>
+  + save(car: Car): Car
+  + deleteByObjectId(objectId: String): void
+}
+
+class CarService {
+}
+
+class CarController {
+  - carService: CarService
+   + create(carDto: CarDTO): ResponseEntity<Long>
+    + getAll(): Page<CarDto>
+  + getByObjectId(objectId: String): Optional<CarDto>
+  + deleteByObjectId(objectId: String): void
+  + getByMakeAndModel(): Page<CarDto>
+  + getByMakeAndModelAndYear(): Page<CarDto>
+  + getByMakeAndModelAndMinYearAndMaxYear(): Page<CarDto>
+
+}
+
+CarController -- CarService
+CarService -- CarRepository
+CarService -- CarDto
+CarDto -- Car
+Car -- Category
+
+@enduml
