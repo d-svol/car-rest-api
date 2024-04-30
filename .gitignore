@@ -3,6 +3,8 @@
 HELP.md
 /shelf
 /.idea
+/.mvn/wrapper
+.mvn
 target/
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -19,6 +21,7 @@ secret.properties
 .sts4-cache
 
 ### IntelliJ IDEA ###
+
 .idea
 *.iws
 *.iml
