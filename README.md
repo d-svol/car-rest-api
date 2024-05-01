@@ -1,8 +1,9 @@
 ### Car REST Service
+
+*Note that this is a test project (or pet project) intended for demonstration purposes.*
 ***
 
 ### Description
-*Note that this is a test project (or pet project) intended for demonstration purposes.* \
 This is a simple REST API built using Spring Boot, providing users with the following functionalities:
 
  - Create: Allows users to add new car entries to the system.
